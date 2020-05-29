@@ -1,5 +1,7 @@
 project('mpatrol', 'c', version: '1.4.8')
 
+src_dir = include_directories('src')
+
 c_args = [
     '-O3', '-fno-inline-functions', '-DMP_THREADS_SUPPORT', '-DTARGET=TARGET_UNIX',
 ]
@@ -43,6 +45,10 @@ sources = [
 mpatrol = static_library('mpatrol', sources,
         c_args: c_args,
     )
+mpatrol_dep = declare_dependency(
+        link_with : mpatrol,
+        include_directories : src_dir,
+    )
 
 #MPAOBJS = mpalloc.o mpfailure.o mpsetfail.o mpmalloc.o mpcalloc.o mpstrdup.o
 #   mprealloc.o
@@ -52,22 +58,26 @@ mpatrol = static_library('mpatrol', sources,
 # Tools
 
 executable('mpatrol', ['src/mpatrol.c', 'src/getopt.c', 'src/version.c'],
-        dependencies : [ bfd_dep, pthread_dep, ],
-        link_with: mpatrol,
+        dependencies : [ mpatrol_dep, bfd_dep, pthread_dep, ],
     )
 
 executable('mprof', ['src/mprof.c', 'src/graph.c', 'src/getopt.c', 'src/list.c', 'src/tree.c', 'src/version.c'],
-        dependencies : [ bfd_dep, pthread_dep, ],
-        link_with: mpatrol,
+        dependencies : [ mpatrol_dep, bfd_dep, pthread_dep, ],
     )
 
 executable('mptrace', ['src/mptrace.c', 'src/getopt.c', 'src/tree.c', 'src/slots.c', 'src/utils.c', 'src/version.c'],
-        dependencies : [ bfd_dep, pthread_dep, ],
-        link_with: mpatrol,
+        dependencies : [ mpatrol_dep, bfd_dep, pthread_dep, ],
     )
 
 executable('mleak', ['src/mleak.c', 'src/getopt.c', 'src/tree.c', 'src/version.c'],
-        dependencies : [ bfd_dep, pthread_dep, ],
-        link_with: mpatrol,
+        dependencies : [ mpatrol_dep, bfd_dep, pthread_dep, ],
     )
 
+# Tests
+
+test('Test 1', executable('test1', ['tests/fail/test1.c'],
+            include_directories: src_dir,
+            dependencies : [ mpatrol_dep, bfd_dep, pthread_dep, ],
+        ),
+        should_fail: true
+    )
